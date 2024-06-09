@@ -18,7 +18,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+
+app_name = "library"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("books.urls", namespace="books")),
+    path("api/user/", include("users.urls", namespace="users")),
 ]
