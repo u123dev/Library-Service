@@ -23,6 +23,7 @@ app_name = "library"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("books.urls", namespace="books")),
+    path("api/books/", include("books.urls", namespace="books")),
+    path("api/borrowings/", include("borrowings.urls", namespace="borrowings")),
     path("api/user/", include("users.urls", namespace="users")),
 ]
