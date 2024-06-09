@@ -24,5 +24,9 @@ class Borrowing(models.Model):
             ),
         ]
 
+    @property
+    def is_active(self):
+        return not bool(self.actual_return_date)
+
     def __str__(self):
         return f"id: {self.id} | book: {self.book} borrowed: {str(self.borrow_date)} by: {self.user}"
