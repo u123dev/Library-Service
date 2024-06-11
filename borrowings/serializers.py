@@ -38,3 +38,12 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             )
         return data
 
+    def create(self, validated_data):
+        with transaction.atomic():
+            borrowings = Borrowing.objects.create(**validated_data)
+
+            book = validated_data.pop("book")
+            book.inventory -= 1
+            book.save()
+
+        return borrowings
