@@ -59,3 +59,9 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
         fields = ("id", "actual_return_date", )
+
+    def validate_actual_return_date(self, value):
+        if self.instance.actual_return_date is not None:
+            raise serializers.ValidationError("Borrowing already returned.")
+
+        return value
