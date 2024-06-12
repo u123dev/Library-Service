@@ -10,7 +10,6 @@ from borrowings.serializers import BorrowingSerializer, BorrowingCreateSerialize
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.all()
-    # serializer_class = BorrowingSerializer
     permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
@@ -40,7 +39,6 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         methods=["POST", ],
         detail=True,
         url_path="return",
-        # permission_classes=[IsAuthenticated, ],
     )
     def return_borrowing(self, request, pk=None):
         """Endpoint for returning borrowing"""
