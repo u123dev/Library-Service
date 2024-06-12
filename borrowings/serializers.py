@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -43,10 +45,17 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         with transaction.atomic():
-            borrowings = Borrowing.objects.create(**validated_data)
+            borrowing = Borrowing.objects.create(**validated_data)
 
             book = validated_data.pop("book")
             book.inventory -= 1
             book.save()
 
-        return borrowings
+        return borrowing
+
+
+class BorrowingReturnSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Borrowing
+        fields = ("id", "actual_return_date", )
