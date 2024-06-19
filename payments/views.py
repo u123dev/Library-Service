@@ -1,3 +1,12 @@
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
-# Create your views here.
+from payments.models import Payment
+from payments.serializers import PaymentSerializer
+
+
+class PaymentsViewSet(ReadOnlyModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    # permission_classes = (IsAuthenticated,)
