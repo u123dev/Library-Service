@@ -20,5 +20,5 @@ def check_overdue():
         for borrowing in borrowings:
             bot.send_message(f"*Overdue* {detail_borrowing_info(borrowing)}")
     else:
-        msg = f"*No borrowings overdue today*"
+        msg = "*No borrowings overdue today*"
         bot.send_message(msg)
