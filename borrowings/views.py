@@ -6,6 +6,8 @@ from rest_framework.response import Response
 
 from borrowings.models import Borrowing
 from borrowings.serializers import BorrowingSerializer, BorrowingCreateSerializer, BorrowingReturnSerializer
+from borrowings.tasks import check_overdue
+from notifications.services import bot
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
@@ -46,4 +48,18 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(borrowing, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        bot.send_message(f"*Return* Borrowing id: {borrowing.id} \n"
+                         f"Book: {borrowing.book} \n"
+                         f"User: {borrowing.user} \n")
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=["GET", ],
+        detail=False,
+        url_path="overdue",
+    )
+    def overdue(self, request, pk=None):
+        """Endpoint for check overdue borrowings"""
+        check_overdue()
+        return Response(status=status.HTTP_200_OK)
