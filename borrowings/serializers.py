@@ -34,13 +34,16 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Borrowing
-        fields = ("id", "book", "user", "borrow_date", "expected_return_date", "actual_return_date", )
+        fields = ("id", "book", "user", "borrow_date", "expected_return_date", )
+
+    def validate_expected_return_date(self, data):
+        if data < datetime.today().date():
+            raise serializers.ValidationError("Expected return date must be at least today.")
+        return data
 
     def validate_book(self, data):
         if data.inventory < 1:
-            raise serializers.ValidationError(
-                "The book you are borrowing cannot be borrowed."
-            )
+            raise serializers.ValidationError("The book cannot be borrowed: inventory=0.")
         return data
 
     def create(self, validated_data):
@@ -63,7 +66,8 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     def validate_actual_return_date(self, value):
         if self.instance.actual_return_date is not None:
             raise serializers.ValidationError("Borrowing already returned.")
-
+        if value <= datetime.now().date():
+            raise serializers.ValidationError("Actual return date must not be less than today.")
         return value
 
     def update(self, instance, validated_data):
