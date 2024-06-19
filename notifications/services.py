@@ -13,7 +13,6 @@ class TelegramSender:
 
     def send_message(self, message):
         mess = self.tb.send_message(chat_id=self.chat_id, text=message)
-        print(mess)
 
 
 bot = TelegramSender()
