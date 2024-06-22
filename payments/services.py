@@ -1,3 +1,6 @@
+import decimal
+from decimal import Decimal
+
 import stripe
 from django.http import HttpRequest
 from rest_framework.generics import get_object_or_404
@@ -10,9 +13,7 @@ from payments.models import Payment
 stripe.api_key = STRIPE_API_KEY
 
 
-def create_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment:
-    days = (borrowing.expected_return_date - borrowing.borrow_date).days + 1
-    total_price = borrowing.book.daily_fee * days
+def _create_stripe_checkout_session(borrowing: Borrowing, sum: decimal, type: Payment.Type, request: HttpRequest) -> Payment:
 
     success_url = request.build_absolute_uri(reverse("payments:payment-success"))
     cancel_url = request.build_absolute_uri(reverse("payments:payment-cancel"))
@@ -23,9 +24,9 @@ def create_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -
                 "price_data": {
                     "currency": "usd",
                     "product_data": {
-                        "name": f"Borrowing payment for {borrowing.book.title}",
+                        "name": f"Borrowing {type} for {borrowing.book.title}",
                     },
-                    "unit_amount_decimal": total_price * 100,
+                    "unit_amount_decimal": sum * 100,
                 },
                 "quantity": 1,
             }],
@@ -35,15 +36,22 @@ def create_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -
         )
 
         payment = Payment.objects.create(
+            type=type,
             borrowing=borrowing,
             session_url=session.url,
             session_id=session.id,
-            money_to_pay=total_price
+            money_to_pay=sum
         )
     except stripe.error.InvalidRequestError:
         payment = None
 
     return payment
+
+
+def create_payment_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment:
+    days = (borrowing.expected_return_date - borrowing.borrow_date).days + 1
+    total_price = borrowing.book.daily_fee * days
+    return _create_stripe_checkout_session(borrowing, total_price, Payment.Type.PAYMENT, request)
 
 
 def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
