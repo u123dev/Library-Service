@@ -152,3 +152,5 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
 }
+
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
