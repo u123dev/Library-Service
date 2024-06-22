@@ -6,8 +6,9 @@ from rest_framework import serializers
 from books.models import Book
 from books.serializers import BookSerializer
 from borrowings.models import Borrowing
+from payments.models import Payment
 from payments.serializers import PaymentSerializer
-from payments.services import create_stripe_checkout_session
+from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
@@ -58,7 +59,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             book.inventory -= 1
             book.save()
 
-            payment = create_stripe_checkout_session(borrowing, self.context["request"])
+            payment = create_payment_stripe_checkout_session(borrowing, self.context["request"])
 
         return borrowing
 
@@ -87,5 +88,7 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
             book = instance.book
             book.inventory += 1
             book.save()
+
+            payment_fine = create_fine_stripe_checkout_session(instance, self.context["request"])
 
         return instance
