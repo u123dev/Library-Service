@@ -44,3 +44,15 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
         )
 
 
+    @action(
+        methods=["GET", ],
+        detail=False,
+        url_path="cancel",
+    )
+    def cancel(self, request):
+        """Endpoint for cancel payment"""
+
+        return Response(
+            "Payment can be paid later. Session is available for only 24h.",
+            status=status.HTTP_200_OK
+        )
