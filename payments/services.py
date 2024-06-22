@@ -10,12 +10,12 @@ from payments.models import Payment
 stripe.api_key = STRIPE_API_KEY
 
 
-def create_stripe_checkout_session(borrowing: Borrowing) -> Payment:
+def create_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment:
     days = (borrowing.expected_return_date - borrowing.borrow_date).days + 1
     total_price = borrowing.book.daily_fee * days
 
-    success_url = ""
-    cancel_url = ""
+    success_url = request.build_absolute_uri(reverse("payments:payment-success"))
+    cancel_url = request.build_absolute_uri(reverse("payments:payment-cancel"))
 
     try:
         session = stripe.checkout.Session.create(
