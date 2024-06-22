@@ -13,7 +13,12 @@ from payments.models import Payment
 stripe.api_key = STRIPE_API_KEY
 
 
-def _create_stripe_checkout_session(borrowing: Borrowing, sum: decimal, type: Payment.Type, request: HttpRequest) -> Payment:
+def _create_stripe_checkout_session(
+        borrowing: Borrowing,
+        sum: decimal,
+        type: Payment.Type,
+        request: HttpRequest
+) -> Payment:
 
     success_url = request.build_absolute_uri(reverse("payments:payment-success"))
     cancel_url = request.build_absolute_uri(reverse("payments:payment-cancel"))
@@ -74,3 +79,20 @@ def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
 
     except stripe.error.StripeError as e:
         return e
+
+
+def detail_payment_info(instance: Payment) -> str:
+
+    if instance.type == Payment.Type.PAYMENT:
+        date_from = instance.borrowing.borrow_date
+        date_to = instance.borrowing.expected_return_date
+    else:
+        date_from = instance.borrowing.expected_return_date
+        date_to = instance.borrowing.actual_return_date
+
+    return (f"*{instance.type.capitalize()} Checkout has been created.* \n"
+            f"Amount: {instance.money_to_pay}\n"
+            f"Borrowing id: {instance.borrowing.id} | Book: {instance.borrowing.book.title} | "
+            f"User: {instance.borrowing.user}\n"
+            f"From: {date_from} To: {date_to}\n"
+            f"Status: {instance.type} : {instance.status}")
