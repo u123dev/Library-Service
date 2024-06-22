@@ -15,3 +15,8 @@ def send_msg_after_create(sender, instance, created, **kwargs):
                    f"From: {instance.borrowing.borrow_date} To: {instance.borrowing.expected_return_date}\n"
                    f"Status: {instance.type} : {instance.status}")
         bot.send_message(message)
+
+    if kwargs.get("update_fields") and "status" in kwargs.get("update_fields"):
+        message = (f"*Payment Successful.* Amount: {instance.money_to_pay} | "
+                   f"Borrowing id: {instance.borrowing.id}")
+        bot.send_message(message)
