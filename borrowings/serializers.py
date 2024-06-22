@@ -6,12 +6,15 @@ from rest_framework import serializers
 from books.models import Book
 from books.serializers import BookSerializer
 from borrowings.models import Borrowing
+from payments.serializers import PaymentSerializer
+from payments.services import create_stripe_checkout_session
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
     # book = BookSerializer(read_only=True)
     book = serializers.StringRelatedField()
+    payments = PaymentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrowing
@@ -23,6 +26,7 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "expected_return_date",
             "actual_return_date",
             "is_active",
+            "payments",
         )
         read_only_fields = ("is_active", )
 
@@ -54,6 +58,8 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             book.inventory -= 1
             book.save()
 
+            payment = create_stripe_checkout_session(borrowing)
+
         return borrowing
 
 
@@ -66,7 +72,7 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     def validate_actual_return_date(self, value):
         if self.instance.actual_return_date is not None:
             raise serializers.ValidationError("Borrowing already returned.")
-        if value <= datetime.now().date():
+        if value and value <= datetime.now().date():
             raise serializers.ValidationError("Actual return date must not be less than today.")
         return value
 
