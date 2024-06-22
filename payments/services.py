@@ -54,6 +54,13 @@ def create_payment_stripe_checkout_session(borrowing: Borrowing, request: HttpRe
     return _create_stripe_checkout_session(borrowing, total_price, Payment.Type.PAYMENT, request)
 
 
+def create_fine_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment:
+    overdue_days = max((borrowing.actual_return_date - borrowing.expected_return_date).days, 0)
+    if overdue_days > 0:
+        fine_price = borrowing.book.daily_fee * overdue_days * Decimal(Payment.FINE_MULTIPLIER)
+        return _create_stripe_checkout_session(borrowing, fine_price, Payment.Type.FINE, request)
+
+
 def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
     try:
         session = stripe.checkout.Session.retrieve(session_id)
