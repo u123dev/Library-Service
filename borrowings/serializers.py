@@ -58,7 +58,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             book.inventory -= 1
             book.save()
 
-            payment = create_stripe_checkout_session(borrowing)
+            payment = create_stripe_checkout_session(borrowing, self.context["request"])
 
         return borrowing
 
