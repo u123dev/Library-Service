@@ -8,6 +8,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from payments.models import Payment
 from payments.serializers import PaymentSerializer, PaymentSuccessSerializer
 from payments.services import set_payment_status_paid
+from payments.tasks import check_expired_session
 
 
 class PaymentsViewSet(ReadOnlyModelViewSet):
@@ -56,3 +57,14 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
             "Payment can be paid later. Session is available for only 24h.",
             status=status.HTTP_200_OK
         )
+
+
+    @action(
+        methods=["GET", ],
+        detail=False,
+        url_path="check_expired",
+    )
+    def check_expired(self, request):
+        """Endpoint for check_expired payment"""
+        res = check_expired_session()
+        return Response(res, status=status.HTTP_200_OK)
