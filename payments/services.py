@@ -20,7 +20,7 @@ def _create_stripe_checkout_session(
         request: HttpRequest
 ) -> Payment:
 
-    success_url = request.build_absolute_uri(reverse("payments:payment-success"))
+    success_url = request.build_absolute_uri(reverse("payments:payment-success")) + "?session_id={CHECKOUT_SESSION_ID}"
     cancel_url = request.build_absolute_uri(reverse("payments:payment-cancel"))
 
     try:
