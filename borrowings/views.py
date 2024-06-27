@@ -104,7 +104,6 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         check_overdue()
         return Response(status=status.HTTP_200_OK)
 
-
     @action(
         methods=["GET", ],
         detail=False,
