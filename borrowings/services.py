@@ -1,3 +1,11 @@
+from borrowings.models import Borrowing
+from payments.models import Payment
+from users.models import User
+
+
+def pending_count(reader: User):
+    count = Borrowing.objects.filter(user=reader).filter(payments__status=Payment.StatusType.PENDING).count()
+    return count
 
 
 def detail_borrowing_info(instance):

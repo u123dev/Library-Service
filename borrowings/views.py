@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from borrowings.models import Borrowing
 from borrowings.serializers import BorrowingSerializer, BorrowingCreateSerializer, BorrowingReturnSerializer
+from borrowings.services import pending_count
 from borrowings.tasks import check_overdue
 from notifications.services import bot
 from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
@@ -43,6 +44,12 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        if (count := pending_count(request.user)) > 0:
+            return Response(
+                {"Borrowing" : "Is not allowed.", "Count of pending payments" : count},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         with transaction.atomic():
             serializer.save()
 
@@ -76,7 +83,6 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
             book.inventory += 1
             book.save()
 
-            # borrowing.refresh_from_db()
             payment_fine = create_fine_stripe_checkout_session(borrowing, self.request)
 
         bot.send_message(f"*Return* Borrowing id: {borrowing.id} \n"
@@ -97,3 +103,14 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         """Endpoint for check overdue borrowings"""
         check_overdue()
         return Response(status=status.HTTP_200_OK)
+
+
+    @action(
+        methods=["GET", ],
+        detail=False,
+        url_path="pending",
+    )
+    def pending(self, request, pk=None):
+        """Endpoint for pending count"""
+        count = pending_count(request.user)
+        return Response(count, status=status.HTTP_200_OK)
