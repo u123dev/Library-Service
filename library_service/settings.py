@@ -15,6 +15,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+LOCAL = not bool(os.getenv("DEV", False))
+
 load_dotenv()
 
 
@@ -28,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
-    # "django-insecure-u#t&0bm^8q&4%5bcc3!2s3*e%rj--8epbe(%8$rt7m^*dkuftm",
+    "django-insecure-u#t&0bm^8q&4%5bcc3!2s3*e%rj--8epbe(%8$rt7m^*dkuftm",
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -48,6 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "debug_toolbar",
     "books",
     "users",
     "borrowings",
@@ -56,6 +59,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -88,12 +92,24 @@ WSGI_APPLICATION = "library_service.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if LOCAL:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("POSTGRES_ENGINE", "django.db.backends.sqlite3"),
+            "NAME": os.environ.get("POSTGRES_DB", BASE_DIR / "db.sqlite3"),
+            "USER": os.environ.get("POSTGRES_USER"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+            "HOST": os.environ.get("POSTGRES_HOST"),
+            "PORT": os.environ.get("POSTGRES_PORT"),
+        }
+    }
 
 
 # Password validation
@@ -138,10 +154,16 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 3,
 }
 
 SIMPLE_JWT = {
