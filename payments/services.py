@@ -67,6 +67,10 @@ def create_fine_stripe_checkout_session(borrowing: Borrowing, request: HttpReque
     return None
 
 
+def renew_stripe_checkout_session(payment: Payment, request: HttpRequest) -> Payment:
+    return _create_stripe_checkout_session(payment.borrowing, payment.money_to_pay, payment.type, request)
+
+
 def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
     try:
         session = stripe.checkout.Session.retrieve(session_id)
