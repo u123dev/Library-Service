@@ -1,13 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from payments.models import Payment
 from payments.serializers import PaymentSerializer, PaymentSuccessSerializer
-from payments.services import set_payment_status_paid
+from payments.services import set_payment_status_paid, renew_stripe_checkout_session
 from payments.tasks import check_expired_session
 
 
@@ -65,6 +66,28 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
         url_path="check_expired",
     )
     def check_expired(self, request):
-        """Endpoint for check_expired payment"""
+        """Endpoint for check all expired payment sessions"""
         res = check_expired_session()
         return Response(res, status=status.HTTP_200_OK)
+
+    @action(
+        methods=["GET", ],
+        detail=True,
+        url_path="check_expired",
+    )
+    def renew(self, request, pk=None):
+        """Endpoint for renew payment session, if expired. Otherwise - redirect"""
+        payment = get_object_or_404(Payment, pk=pk)
+        status = payment.status
+
+        if status == Payment.StatusType.PAID:
+            return Response("Payment is already paid")
+
+        if status == Payment.StatusType.PENDING:
+            return redirect(payment.session_url)
+
+        # status == Payment.StatusType.EXPIRED
+        new_payment = renew_stripe_checkout_session(payment, request)
+        print(new_payment.session_url)
+
+        return redirect(new_payment.session_url)
