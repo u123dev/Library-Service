@@ -18,5 +18,6 @@ def send_msg_after_save(sender, instance, created, **kwargs):
                        f"Borrowing id: {instance.borrowing.id}")
             bot.send_message(message)
         if instance.status == "expired":
-            message = f"*Session Expired.* {instance.session_id}"
+            message = f"*Session Expired.* {instance.session_id}\n"\
+                      f"*Borrowing id:* {instance.borrowing.id}"
             bot.send_message(message)
