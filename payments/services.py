@@ -59,11 +59,12 @@ def create_payment_stripe_checkout_session(borrowing: Borrowing, request: HttpRe
     return _create_stripe_checkout_session(borrowing, total_price, Payment.Type.PAYMENT, request)
 
 
-def create_fine_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment:
+def create_fine_stripe_checkout_session(borrowing: Borrowing, request: HttpRequest) -> Payment | None:
     overdue_days = max((borrowing.actual_return_date - borrowing.expected_return_date).days, 0)
     if overdue_days > 0:
         fine_price = borrowing.book.daily_fee * overdue_days * Decimal(Payment.FINE_MULTIPLIER)
         return _create_stripe_checkout_session(borrowing, fine_price, Payment.Type.FINE, request)
+    return None
 
 
 def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
@@ -74,12 +75,26 @@ def set_payment_status_paid(session_id: str) -> bool | stripe.error.StripeError:
             payment = get_object_or_404(Payment, session_id=session_id)
             payment.status = Payment.StatusType.PAID
             payment.save(update_fields=["status"])
-
             return True
 
     except stripe.error.StripeError as e:
         return e
 
+def set_payment_status_expired(payment: Payment) -> bool:
+    ''' Set payment status Expired, if session is expired '''
+
+    session_id = payment.session_id
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.status == "expired":
+            payment.status = Payment.StatusType.EXPIRED
+            payment.save(update_fields=["status"])
+            return True
+
+    except stripe.error.StripeError as e:
+        pass
+
+    return False
 
 def detail_payment_info(instance: Payment) -> str:
 
