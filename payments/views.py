@@ -45,7 +45,6 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-
     @action(
         methods=["GET", ],
         detail=False,
@@ -58,7 +57,6 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
             "Payment can be paid later. Session is available for only 24h.",
             status=status.HTTP_200_OK
         )
-
 
     @action(
         methods=["GET", ],

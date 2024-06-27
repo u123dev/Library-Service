@@ -13,11 +13,15 @@ def send_msg_after_save(sender, instance, created, **kwargs):
         bot.send_message(message)
 
     if kwargs.get("update_fields") and "status" in kwargs.get("update_fields"):
-        if instance.status == "paid":
+        if instance.status == Payment.StatusType.PAID:
             message = (f"*Payment Successful.* Amount: {instance.money_to_pay} | "
                        f"Borrowing id: {instance.borrowing.id}")
             bot.send_message(message)
-        if instance.status == "expired":
+        if instance.status == Payment.StatusType.EXPIRED:
             message = f"*Session Expired.* {instance.session_id}\n"\
                       f"*Borrowing id:* {instance.borrowing.id}"
             bot.send_message(message)
+        if instance.status == Payment.StatusType.PENDING:
+            message = f"{detail_payment_info(instance, "Renewed")}"
+            bot.send_message(message)
+

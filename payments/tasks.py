@@ -7,5 +7,5 @@ def check_expired_session():
 
     payments = Payment.objects.filter(status=Payment.StatusType.PENDING)
     res = {payment.session_id : payment.status
-           for payment in payments if (status := set_payment_status_expired(payment))}
+           for payment in payments if set_payment_status_expired(payment)}
     return res
