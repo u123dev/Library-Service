@@ -51,18 +51,6 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The book cannot be borrowed: inventory=0.")
         return data
 
-    def create(self, validated_data):
-        with transaction.atomic():
-            borrowing = Borrowing.objects.create(**validated_data)
-
-            book = validated_data.pop("book")
-            book.inventory -= 1
-            book.save()
-
-            payment = create_payment_stripe_checkout_session(borrowing, self.context["request"])
-
-        return borrowing
-
 
 class BorrowingReturnSerializer(serializers.ModelSerializer):
 
@@ -73,22 +61,11 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     def validate_actual_return_date(self, value):
         if self.instance.actual_return_date is not None:
             raise serializers.ValidationError("Borrowing already returned.")
-        if value and value <= datetime.now().date():
+        if value and value < datetime.now().date():
             raise serializers.ValidationError("Actual return date must not be less than today.")
         return value
 
-    def update(self, instance, validated_data):
-        with transaction.atomic():
-            if not validated_data.get("actual_return_date"):
-                instance.actual_return_date = datetime.now().date()
-            else:
-                instance.actual_return_date = validated_data.pop("actual_return_date")
-            instance.save()
-
-            book = instance.book
-            book.inventory += 1
-            book.save()
-
-            payment_fine = create_fine_stripe_checkout_session(instance, self.context["request"])
-
-        return instance
+    def validate(self, attrs):
+        if not attrs.get("actual_return_date"):
+            attrs["actual_return_date"] = datetime.now().date()
+        return attrs

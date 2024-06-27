@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.db import transaction
+from django.shortcuts import render, redirect
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +9,7 @@ from borrowings.models import Borrowing
 from borrowings.serializers import BorrowingSerializer, BorrowingCreateSerializer, BorrowingReturnSerializer
 from borrowings.tasks import check_overdue
 from notifications.services import bot
+from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
@@ -37,6 +39,25 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            serializer.save()
+
+            borrowing = Borrowing.objects.get(pk=serializer["id"].value)
+            book = borrowing.book
+            book.inventory -= 1
+            book.save()
+
+            payment = create_payment_stripe_checkout_session(borrowing, self.request)
+            print(payment.session_url)
+
+        # headers = self.get_success_headers(serializer.data)
+        # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return redirect(payment.session_url)
+
     @action(
         methods=["POST", ],
         detail=True,
@@ -47,12 +68,25 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         borrowing = self.get_object()
         serializer = self.get_serializer(borrowing, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        with transaction.atomic():
+            serializer.save()
+
+            book = borrowing.book
+            book.inventory += 1
+            book.save()
+
+            # borrowing.refresh_from_db()
+            payment_fine = create_fine_stripe_checkout_session(borrowing, self.request)
 
         bot.send_message(f"*Return* Borrowing id: {borrowing.id} \n"
                          f"Book: {borrowing.book} \n"
                          f"User: {borrowing.user} \n")
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        if payment_fine:
+            return redirect(payment_fine.session_url)
+        else:
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         methods=["GET", ],
