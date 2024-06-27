@@ -22,7 +22,8 @@ def _create_stripe_checkout_session(
     """ Create a Stripe checkout session with success & cancel urls
         Return: Session object or None, if error occurs """
 
-    success_url = request.build_absolute_uri(reverse("payments:payment-success")) + "?session_id={CHECKOUT_SESSION_ID}"
+    success_url = (request.build_absolute_uri(reverse("payments:payment-success"))
+                   + "?session_id={CHECKOUT_SESSION_ID}")
     cancel_url = request.build_absolute_uri(reverse("payments:payment-cancel"))
 
     try:
@@ -110,7 +111,12 @@ def create_fine_stripe_checkout_session(borrowing: Borrowing, request: HttpReque
 def renew_stripe_checkout_session(payment: Payment, request: HttpRequest) -> Payment:
     """ Create a Stripe checkout session & ReNew Payment """
 
-    if session := _create_stripe_checkout_session(payment.borrowing, payment.money_to_pay, payment.type, request):
+    if session := _create_stripe_checkout_session(
+            payment.borrowing,
+            payment.money_to_pay,
+            payment.type,
+            request
+    ):
         payment = _update_payment(payment, session)
         return payment
 
@@ -146,7 +152,7 @@ def set_payment_status_expired(payment: Payment) -> bool:
     return False
 
 
-def detail_payment_info(instance: Payment, action: str ="created" ) -> str:
+def detail_payment_info(instance: Payment, action: str = "created") -> str:
 
     if instance.type == Payment.Type.PAYMENT:
         date_from = instance.borrowing.borrow_date

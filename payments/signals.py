@@ -24,4 +24,3 @@ def send_msg_after_save(sender, instance, created, **kwargs):
         if instance.status == Payment.StatusType.PENDING:
             message = f"{detail_payment_info(instance, "Renewed")}"
             bot.send_message(message)
-
