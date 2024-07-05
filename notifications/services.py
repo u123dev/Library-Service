@@ -1,6 +1,7 @@
 import os
 
 import telebot
+from telebot.apihelper import ApiException
 
 
 class TelegramSender:
@@ -12,8 +13,11 @@ class TelegramSender:
         self.chat_id = CHAT_ID
 
     def send_message(self, message):
-        mess = self.tb.send_message(chat_id=self.chat_id, text=message)
-        return mess
+        try:
+            mess = self.tb.send_message(chat_id=self.chat_id, text=message)
+            return mess
+        except ApiException as e:
+            return e
 
 
 bot = TelegramSender()
