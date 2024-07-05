@@ -1,14 +1,9 @@
 from datetime import datetime
 
-from django.db import transaction
 from rest_framework import serializers
 
-from books.models import Book
-from books.serializers import BookSerializer
 from borrowings.models import Borrowing
-from payments.models import Payment
 from payments.serializers import PaymentSerializer
-from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
@@ -50,6 +45,17 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         if data.inventory < 1:
             raise serializers.ValidationError("The book cannot be borrowed: inventory=0.")
         return data
+
+
+class BorrowingDetailSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        model = Borrowing
+        fields = ("id", "book", "user", "borrow_date", "expected_return_date", )
+        read_only_fields = ("book", "expected_return_date", )
 
 
 class BorrowingReturnSerializer(serializers.ModelSerializer):
