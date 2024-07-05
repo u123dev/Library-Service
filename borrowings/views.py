@@ -6,7 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from borrowings.models import Borrowing
-from borrowings.serializers import BorrowingSerializer, BorrowingCreateSerializer, BorrowingReturnSerializer
+from borrowings.serializers import (
+    BorrowingSerializer,
+    BorrowingCreateSerializer,
+    BorrowingReturnSerializer,
+    BorrowingDetailSerializer
+)
 from borrowings.services import pending_count
 from borrowings.tasks import check_overdue
 from notifications.services import bot
@@ -18,14 +23,16 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
-        if self.action in ("create", "update", ):
+        if self.action in ("create", ):
             return BorrowingCreateSerializer
+        if self.action in ("update", ):
+            return BorrowingDetailSerializer
         if self.action == "return_borrowing":
             return BorrowingReturnSerializer
         return BorrowingSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.select_related("book", "user").prefetch_related("payments")
 
         if not self.request.user.is_staff:
             queryset = queryset.filter(user_id=self.request.user.id)

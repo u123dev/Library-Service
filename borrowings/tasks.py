@@ -11,7 +11,7 @@ def check_overdue():
         actual_return_date__isnull=True
     ).filter(
         expected_return_date__lte=datetime.now().date() + timedelta(days=1)
-    ).order_by('borrow_date')
+    ).order_by('borrow_date').select_related()
 
     if borrowings_count := borrowings.count():
         msg = f"*Overdue borrowings qty = {borrowings_count}*"
