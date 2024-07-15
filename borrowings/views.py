@@ -1,9 +1,10 @@
 from django.db import transaction
 from django.shortcuts import render, redirect
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from borrowings.models import Borrowing
 from borrowings.serializers import (
@@ -18,14 +19,17 @@ from notifications.services import bot
 from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
 
 
-class BorrowingsViewSet(viewsets.ModelViewSet):
+class BorrowingsViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
+                        mixins.ListModelMixin,
+                        GenericViewSet):
     queryset = Borrowing.objects.all()
     permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
         if self.action in ("create", ):
             return BorrowingCreateSerializer
-        if self.action in ("update", ):
+        if self.action in ("retrieve", ):
             return BorrowingDetailSerializer
         if self.action == "return_borrowing":
             return BorrowingReturnSerializer
@@ -105,11 +109,12 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         methods=["GET", ],
         detail=False,
         url_path="overdue",
+        permission_classes=[IsAdminUser, ]
     )
     def overdue(self, request, pk=None):
         """Endpoint for check overdue borrowings"""
-        check_overdue()
-        return Response(status=status.HTTP_200_OK)
+        result = {"Overdue": check_overdue()}
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(
         methods=["GET", ],
@@ -118,5 +123,6 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
     )
     def pending(self, request, pk=None):
         """Endpoint for pending count"""
-        count = pending_count(request.user)
-        return Response(count, status=status.HTTP_200_OK)
+        result = {"Pending": pending_count(request.user),
+                  "user_id": request.user.id, }
+        return Response(result, status=status.HTTP_200_OK)
