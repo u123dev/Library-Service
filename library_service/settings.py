@@ -141,7 +141,7 @@ TIME_ZONE = "Europe/Kiev"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -176,3 +176,7 @@ SIMPLE_JWT = {
 }
 
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
+
+DEBUG_TOOLBAR_CONFIG = {
+    "IS_RUNNING_TESTS": False,
+}
