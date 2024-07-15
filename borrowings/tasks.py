@@ -5,13 +5,13 @@ from borrowings.services import detail_borrowing_info
 from notifications.services import bot
 
 
-def check_overdue():
+def check_overdue() -> int:
     # filter(is_active=True)
     borrowings = Borrowing.objects.filter(
         actual_return_date__isnull=True
     ).filter(
         expected_return_date__lte=datetime.now().date() + timedelta(days=1)
-    ).order_by('borrow_date').select_related()
+    ).order_by("borrow_date").select_related()
 
     if borrowings_count := borrowings.count():
         msg = f"*Overdue borrowings qty = {borrowings_count}*"
@@ -22,3 +22,5 @@ def check_overdue():
     else:
         msg = "*No borrowings overdue today*"
         bot.send_message(msg)
+
+    return borrowings_count

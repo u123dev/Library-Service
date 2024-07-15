@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -62,6 +62,7 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
         methods=["GET", ],
         detail=False,
         url_path="check_expired",
+        permission_classes=(IsAdminUser,)
     )
     def check_expired(self, request):
         """Endpoint for check all expired payment sessions"""
@@ -71,7 +72,7 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
     @action(
         methods=["GET", ],
         detail=True,
-        url_path="check_expired",
+        url_path="renew",
     )
     def renew(self, request, pk=None):
         """Endpoint for renew payment session, if expired. Otherwise - redirect"""
