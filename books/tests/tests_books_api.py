@@ -25,7 +25,8 @@ class ModelBookTests(TestCase):
         self.book1 = init_sample_book()
 
     def test_book_str_successfully(self):
-        self.assertEqual(str(self.book1), f"Sample_book1 by Author1 | soft cover | 11 pcs")
+        self.assertEqual(str(self.book1), "Sample_book1 by Author1 | soft cover | 11 pcs")
+
 
 class AnonymousUserBookAPITestCase(APITestCase):
     def setUp(self):
