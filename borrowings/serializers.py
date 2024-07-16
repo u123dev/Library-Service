@@ -52,7 +52,7 @@ class BorrowingDetailSerializer(serializers.ModelSerializer):
 
     def borrowing_payments(self, obj) -> ReturnList:
         ''' Pggination by related payments'''
-        payments = Payment.objects.filter(borrowing=obj)
+        payments = Payment.objects.filter(borrowing=obj).order_by("borrowing__borrow_date")
         if self.context.get("request"):
             paginator = pagination.PageNumberPagination()
             page = paginator.paginate_queryset(payments, self.context["request"])
