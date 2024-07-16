@@ -25,7 +25,7 @@ class Borrowing(models.Model):
         ]
 
     @property
-    def is_active(self):
+    def is_active(self) -> bool:
         return not bool(self.actual_return_date)
 
     def __str__(self):

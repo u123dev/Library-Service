@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "debug_toolbar",
+    "drf_spectacular",
     "books",
     "users",
     "borrowings",
@@ -164,6 +165,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 3,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
@@ -179,4 +181,11 @@ STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
 
 DEBUG_TOOLBAR_CONFIG = {
     "IS_RUNNING_TESTS": False,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Library Service API",
+    "DESCRIPTION": "Online management system for booking borrowings.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }

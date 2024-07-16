@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from rest_framework import serializers, pagination
+from rest_framework.utils.serializer_helpers import ReturnList
 
 from borrowings.models import Borrowing
 from payments.models import Payment
@@ -49,7 +50,7 @@ class BorrowingDetailSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("is_active", )
 
-    def borrowing_payments(self, obj):
+    def borrowing_payments(self, obj) -> ReturnList:
         ''' Pggination by related payments'''
         payments = Payment.objects.filter(borrowing=obj)
         if self.context.get("request"):

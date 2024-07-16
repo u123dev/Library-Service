@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, OpenApiResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -12,6 +14,43 @@ from payments.services import set_payment_status_paid, renew_stripe_checkout_ses
 from payments.tasks import check_expired_session
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of all payments",
+        parameters=[
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user id ( for Admin users ONLY ) "
+                            "(ex. ?user_id=value). ",
+            ),
+        ]
+    ),
+    retrieve=extend_schema(
+        summary="Get payments object by id",
+    ),
+    renew=extend_schema(
+        summary="Renew payment session, if expired",
+        responses={status.HTTP_200_OK: OpenApiResponse(description="")}
+    ),
+    success=extend_schema(
+        summary="Success payment session",
+        responses={
+            status.HTTP_200_OK: PaymentSuccessSerializer,
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(description="Error payment session"),
+        }
+    ),
+    cancel=extend_schema(
+        summary="Cancel payment session",
+        responses={status.HTTP_200_OK: OpenApiResponse(
+            description="Payment can be paid later. Session is available for only 24h."
+        )}
+    ),
+    check_expired=extend_schema(
+        summary="Check expired payment sessions",
+        responses={status.HTTP_200_OK: OpenApiResponse(description="session_id : expired")}
+    ),
+)
 class PaymentsViewSet(ReadOnlyModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
