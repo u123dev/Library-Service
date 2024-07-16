@@ -1,6 +1,8 @@
 from django.db import transaction
 from django.shortcuts import render, redirect
-from rest_framework import viewsets, status, mixins
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, inline_serializer
+from rest_framework import viewsets, status, mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -19,6 +21,66 @@ from notifications.services import bot
 from payments.services import create_payment_stripe_checkout_session, create_fine_stripe_checkout_session
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List of all borrowings",
+        parameters=[
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user id "
+                "(ex. ?user_id=value). ",
+            ),
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.STR,
+                required=False,
+                description="Filter by active borrowings "
+                            "(ex. ?is_active=value - for borrowings still not returned "
+                            "or nothing - for all borrowings).",
+            ),
+        ]
+    ),
+    create=extend_schema(
+        summary="Add new borrowing",
+    ),
+    retrieve=extend_schema(
+        summary="Get borrowing object by id",
+        parameters=[
+            OpenApiParameter(
+                "page",
+                type=OpenApiTypes.STR,
+                description="Page related payments "
+                            "(ex. ?page=value ) "
+            ),
+        ]
+
+    ),
+    return_borrowing=extend_schema(
+        summary="Return borrowing by id",
+    ),
+    overdue=extend_schema(
+        summary="Check overdue borrowings ( only for Admin users )",
+        responses={
+            status.HTTP_200_OK: inline_serializer(
+                name="Overdue",
+                fields={"Overdue": serializers.IntegerField(default=8)}
+            ),
+        }
+    ),
+    pending=extend_schema(
+        summary="Check pending payments count",
+        responses={
+            status.HTTP_200_OK: inline_serializer(
+                name="Pending",
+                fields={
+                    "Pending": serializers.IntegerField(default=25),
+                    "user_id": serializers.IntegerField(default=1),
+                }
+            ),
+        },
+    ),
+)
 class BorrowingsViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
@@ -122,7 +184,7 @@ class BorrowingsViewSet(mixins.CreateModelMixin,
         url_path="pending",
     )
     def pending(self, request, pk=None):
-        """Endpoint for pending count"""
+        """Endpoint for check the number of pending payments for current user"""
         result = {"Pending": pending_count(request.user),
                   "user_id": request.user.id, }
         return Response(result, status=status.HTTP_200_OK)
