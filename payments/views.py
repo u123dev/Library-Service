@@ -47,7 +47,7 @@ from payments.tasks import check_expired_session
         )}
     ),
     check_expired=extend_schema(
-        summary="Check expired payment sessions",
+        summary="Check expired payment sessions ( only for Admin users )",
         responses={status.HTTP_200_OK: OpenApiResponse(description="session_id : expired")}
     ),
 )
