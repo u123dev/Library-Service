@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
 
+from celery.app import shared_task
+
 from borrowings.models import Borrowing
 from borrowings.services import detail_borrowing_info
 from notifications.services import bot
 
 
+@shared_task
 def check_overdue() -> int:
     # filter(is_active=True)
     borrowings = Borrowing.objects.filter(
