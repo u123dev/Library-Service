@@ -1,7 +1,10 @@
+from celery.app import shared_task
+
 from payments.models import Payment
 from payments.services import set_payment_status_expired
 
 
+@shared_task
 def check_expired_session():
     '''Check Stripe Sessions for expiration'''
 
