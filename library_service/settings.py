@@ -203,3 +203,15 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 DJANGO_CELERY_BEAT_TZ_AWARE = False
+
+
+CELERY_BEAT_SCHEDULE = {
+    "check_overdue_borrowings": {
+        "task": "borrowings.tasks.check_overdue",
+        "schedule": crontab(minute="0", hour="20", day_of_month="*/1"),
+    },
+    "check_expired_payments": {
+        "task": "payments.tasks.check_expired_session",
+        "schedule": crontab(minute="*/1"),
+    },
+}
