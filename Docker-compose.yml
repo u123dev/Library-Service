@@ -1,0 +1,91 @@
+
+services:
+  library:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      - DEV=True      # run on development server
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py wait_for_db &&
+              python manage.py migrate && 
+              python manage.py init_superuser &&
+              python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./:/app
+#      - media:/media
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - db_data:$PGDATA
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DEV=True      # run on development server
+    command:  "celery -A library_service worker -E -l info -n worker_library_%n "
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+      - library
+      - redis
+    restart: on-failure
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - DEV=True      # run on development server
+    command: >
+      sh -c "python manage.py wait_for_db &&
+            celery -A library_service beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    depends_on:
+      - db
+      - library
+      - redis
+    restart: on-failure
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - DEV=True      # run on development server
+      - FLOWER_UNAUTHENTICATED_API=true # Flower API access
+    command: "celery -A library_service flower --address=0.0.0.0"
+    depends_on:
+      - db
+      - redis
+      - celery
+      - celery-beat
+
+volumes:
+  db_data:
