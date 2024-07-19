@@ -75,9 +75,7 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
         session_id = serializer.validated_data.get("session_id")
 
         if (e := set_payment_status_paid(session_id)) is True:
-
             return Response("Payment Successful", status=status.HTTP_200_OK)
-            return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(
             {"error": str(e)},
@@ -124,8 +122,6 @@ class PaymentsViewSet(ReadOnlyModelViewSet):
         if status == Payment.StatusType.PENDING:
             return redirect(payment.session_url)
 
-        # status == Payment.StatusType.EXPIRED
         new_payment = renew_stripe_checkout_session(payment, request)
-        print(new_payment.session_url)
 
         return redirect(new_payment.session_url)
