@@ -132,10 +132,7 @@ class BorrowingsViewSet(mixins.CreateModelMixin,
             book.save()
 
             payment = create_payment_stripe_checkout_session(borrowing, self.request)
-            print(payment.session_url)
 
-        # headers = self.get_success_headers(serializer.data)
-        # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         return redirect(payment.session_url)
 
     @action(
