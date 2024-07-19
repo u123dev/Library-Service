@@ -10,7 +10,6 @@ from payments.serializers import PaymentSerializer
 
 class BorrowingSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
-    # book = BookSerializer(read_only=True)
     book = serializers.StringRelatedField()
     payments = PaymentSerializer(many=True, read_only=True)
 
@@ -31,9 +30,7 @@ class BorrowingSerializer(serializers.ModelSerializer):
 
 class BorrowingDetailSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
-    # book = BookSerializer(read_only=True)
     book = serializers.StringRelatedField()
-    # payments = PaymentSerializer(many=True, read_only=True)
     payments = serializers.SerializerMethodField("borrowing_payments")
 
     class Meta:
